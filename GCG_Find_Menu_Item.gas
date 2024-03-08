@@ -1,0 +1,160 @@
+Program.Sub.ScreenSU.Start
+gui.F_Prog..create
+gui.F_Prog..caption("Find Menu Item by Program")
+gui.F_Prog..size(7950,6645)
+gui.F_Prog..minx(0)
+gui.F_Prog..miny(0)
+gui.F_Prog..position(0,0)
+gui.F_Prog..event(unload,F_Prog_Unload)
+gui.F_Prog..alwaysontop(False)
+gui.F_Prog..fontname("Arial")
+gui.F_Prog..fontsize(7)
+gui.F_Prog..forecolor(0)
+gui.F_Prog..fontstyle(,,,,)
+gui.F_Prog..BackColor(-2147483633)
+gui.F_Prog..controlbox(True)
+gui.F_Prog..maxbutton(False)
+gui.F_Prog..minbutton(False)
+gui.F_Prog..mousepointer(1)
+gui.F_Prog..moveable(True)
+gui.F_Prog..sizeable(False)
+gui.F_Prog..ShowInTaskBar(True)
+gui.F_Prog..titlebar(True)
+gui.F_Prog.lbl0.create(label,"Program",True,1500,300,1,105,105,True,0,Arial,7,-2147483633,0)
+gui.F_Prog.lbl0.defaultvalue("")
+gui.F_Prog.lbl0.controlgroup(0)
+gui.F_Prog.txtProg.create(textbox,"",True,1500,300,0,105,315,True,0,Arial,7,16777215,1)
+gui.F_Prog.txtProg.defaultvalue("")
+gui.F_Prog.txtProg.controlgroup(0)
+gui.F_Prog.lvwProg.create(listview)
+gui.F_Prog.lvwProg.view(3)
+gui.F_Prog.lvwProg.addlistviewcolumn("Menu Path",5700,0)
+gui.F_Prog.lvwProg.addlistviewcolumn("Program",1500,0)
+gui.F_Prog.lvwProg.visible(True)
+gui.F_Prog.lvwProg.size(7575,5460)
+gui.F_Prog.lvwProg.zorder(0)
+gui.F_Prog.lvwProg.position(90,720)
+gui.F_Prog.lvwProg.enabled(True)
+gui.F_Prog.lvwProg.borderstyle(1)
+gui.F_Prog.lvwProg.fontname("Arial")
+gui.F_Prog.lvwProg.fontsize(7)
+gui.F_Prog.cmdFind.create(button)
+gui.F_Prog.cmdFind.caption("Find")
+gui.F_Prog.cmdFind.visible(True)
+gui.F_Prog.cmdFind.size(1125,345)
+gui.F_Prog.cmdFind.zorder(0)
+gui.F_Prog.cmdFind.position(1680,300)
+gui.F_Prog.cmdFind.enabled(True)
+gui.F_Prog.cmdFind.fontname("Arial")
+gui.F_Prog.cmdFind.fontsize(7)
+gui.F_Prog.cmdFind.event(click,cmdfind_click)
+gui.F_Prog.cmdFind.defaultvalue("")
+gui.F_Prog.cmdFind.controlgroup(0)
+gui.F_Prog.txtProg.tabstop(True)
+gui.F_Prog.txtProg.tabindex(1)
+gui.F_Prog.lvwProg.tabstop(True)
+gui.F_Prog.lvwProg.tabindex(2)
+gui.F_Prog.cmdFind.tabstop(True)
+gui.F_Prog.cmdFind.tabindex(12)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+Gui.F_Prog..Show
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_Find_Menu_Item.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(F_prog_unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.F_Prog_Unload.Start
+F.Intrinsic.Control.SetErrorHandler("F_Prog_Unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+F.ODBC.Connection!con.Close
+Function.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("F_Prog_Unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_Find_Menu_Item.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	Function.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.F_Prog_Unload.End
+
+program.sub.cmdfind_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdfind_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+V.Local.sMenuPath.Declare(String)
+V.Local.iKey.Declare(Long)
+
+'Clear list view
+Gui.F_Prog.lvwProg.ClearItems
+
+'Make sure user actually entered in a program to search for
+F.Intrinsic.Control.If(V.Screen.F_Prog!txtProg.Text,=,"")
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+
+'Checking to see if program is found in any jobstreams for a menu item
+F.Intrinsic.String.Build("select MENU_SELECTIONS.TITLE, MENU_JOB_STREAM.PROGRAM_APP, MENU_HEADERS.HEADER_TITLE, MENU_MODULE.MODULE_TITLE from "MENU_JOB_STREAM" Inner Join MENU_SELECTIONS on MENU_SELECTIONS.JOB_STREAM_ID = MENU_JOB_STREAM.JOB_STREAM_ID Inner Join MENU_HEADERS on MENU_SELECTIONS.HEADER_ID = MENU_HEADERS.HEADER_ID Inner Join MENU_MODULE on MENU_HEADERS.MODULE_ID = MENU_MODULE.MODULE_ID Where SELECTION_ID >= 100000 and MENU_JOB_STREAM.PROGRAM_APP Like '%{0}%'",V.Screen.F_Prog!txtProg.Text,V.Local.sSql)
+F.ODBC.Connection!con.OpenLocalRecordsetRO("rst",V.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,True)
+	F.Intrinsic.UI.Msgbox("Program not found.")
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.DoUntil(V.ODBC.con!rst.EOF,=,True)
+		'Putting together menut path
+		F.Intrinsic.String.Build("{0} > {1} > {2}",V.ODBC.con!rst.FieldValTrim!MODULE_TITLE,V.ODBC.con!rst.FieldValTrim!HEADER_TITLE,V.ODBC.con!rst.FieldValTrim!TITLE,V.Local.sMenuPath)
+
+		'Adding list view item
+		F.Intrinsic.Math.Add(V.Local.iKey,1,V.Local.iKey)
+		Gui.F_Prog.lvwProg.AddListItem(V.Local.iKey,V.Local.sMenuPath)
+		Gui.F_Prog.lvwProg.SetListItemSubItemText(V.Local.iKey,1,V.ODBC.con!rst.FieldValTrim!PROGRAM_APP)
+
+		F.ODBC.con!rst.MoveNext
+	F.Intrinsic.Control.Loop
+F.Intrinsic.Control.EndIf
+F.ODBC.con!rst.Close
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdfind_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_Find_Menu_Item.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.cmdfind_click.end
+
+Program.Sub.Comments.Start
+${$0$}$Find Menu Item by Program$}$MITCH$}$2/16/2016
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$Program used to search for and locate custom menu item programs that are on the menu.
+Program.Sub.Comments.End
+
